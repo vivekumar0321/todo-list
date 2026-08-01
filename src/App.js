@@ -1,9 +1,12 @@
+// App.js - Without HomePage
 import './App.css';
 import Header from './MyComponents/Header';
 import Footer from './MyComponents/Footer';
 import Todos from './MyComponents/Todos';
 import React, { useState, useEffect } from 'react';
 import AddTodo from './MyComponents/AddTodo';
+import About from './MyComponents/About';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 function App() {
   const [todos, setTodos] = useState(() => {
@@ -16,7 +19,6 @@ function App() {
     }
   });
 
-  // ✅ FIX 2: Save to localStorage whenever todos change
   useEffect(() => {
     try {
       localStorage.setItem("todos", JSON.stringify(todos));
@@ -26,46 +28,35 @@ function App() {
     }
   }, [todos]);
 
-  // ✅ FIX 3: Delete Todo - Use ID comparison, not reference
   const onDelete = (todo) => {
     if (!window.confirm(`Delete "${todo.title}"?`)) {
       return;
     }
-
     const updatedTodos = todos.filter((e) => e.sno !== todo.sno);
     setTodos(updatedTodos);
-    // ✅ localStorage will be updated automatically via useEffect
   };
 
-  // ✅ FIX 4: Add Todo - Remove useEffect from inside
   const addTodo = (title, desc) => {
-    // ✅ Validation
     if (title.trim() === '' || desc.trim() === '') {
       alert('Both Title and Description are required!');
       return;
     }
-
-    // ✅ Generate new sno
     const sno = todos.length === 0 ? 1 : todos[todos.length - 1].sno + 1;
-
     const myTodo = {
       sno: sno,
       title: title,
       desc: desc,
-      completed: false,
-      createdAt: new Date().toLocaleString()
+      completed: false
     };
     setTodos([...todos, myTodo]);
   };
 
-  // ✅ FIX 5: Toggle Complete (Optional but good to have)
   const toggleComplete = (sno) => {
     setTodos(todos.map((todo) =>
       todo.sno === sno ? { ...todo, completed: !todo.completed } : todo
     ));
   };
 
-  // ✅ FIX 6: Clear All (Optional)
   const clearAll = () => {
     if (todos.length === 0) return;
     if (window.confirm('Delete all todos?')) {
@@ -74,26 +65,38 @@ function App() {
   };
 
   return (
-    <>
+    <Router>
       <Header title="My Todos List" searchBar={true} />
-      <AddTodo addTodo={addTodo} />
 
-      {/* ✅ Optional: Clear All button */}
-      {todos.length > 0 && (
-        <div className="container my-2">
-          <button className="btn btn-danger btn-sm" onClick={clearAll}>
-            🗑️ Clear All ({todos.length})
-          </button>
-        </div>
-      )}
+      <Routes>
+        {/* Home Route - Direct inline content */}
+        <Route
+          path="/"
+          element={
+            <>
+              <AddTodo addTodo={addTodo} />
 
-      <Todos
-        todos={todos}
-        onDelete={onDelete}
-        toggleComplete={toggleComplete}
-      />
+              {todos.length > 0 && (
+                <div className="container my-2">
+                  <button className="btn btn-danger btn-sm" onClick={clearAll}>
+                    🗑️ Clear All ({todos.length})
+                  </button>
+                </div>
+              )}
+
+              <Todos
+                todos={todos}
+                onDelete={onDelete}
+                toggleComplete={toggleComplete}
+              />
+            </>
+          }
+        />
+        <Route path="/about" element={<About />} />
+      </Routes>
+
       <Footer />
-    </>
+    </Router>
   );
 }
 
